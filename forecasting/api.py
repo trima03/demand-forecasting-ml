@@ -95,7 +95,8 @@ def model_info() -> dict[str, object]:
         artifact = _load_artifact()
     except (FileNotFoundError, OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {key: artifact[key] for key in ("selected_model", "trained_at", "holdout_start", "holdout_end", "metrics")}
+    keys = ("selected_model", "trained_at", "holdout_start", "holdout_end", "metrics")
+    return {key: artifact[key] for key in keys}
 
 
 @app.post("/v1/forecast", response_model=ForecastResponse)
