@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.joblib
+*.csv
+artifacts/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
