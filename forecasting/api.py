@@ -9,7 +9,6 @@ from functools import lru_cache
 from pathlib import Path
 
 import joblib
-import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from prometheus_client import Counter, Histogram, make_asgi_app
 from pydantic import BaseModel, Field
@@ -18,7 +17,9 @@ from forecasting.features import prediction_row
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", "artifacts/model.joblib"))
 app = FastAPI(title="Demand Forecast API", version="0.1.0")
-forecast_predictions = Counter("forecast_predictions_total", "Successful demand predictions", ["model"])
+forecast_predictions = Counter(
+    "forecast_predictions_total", "Successful demand predictions", ["model"]
+)
 http_requests = Counter(
     "http_requests_total", "Completed HTTP requests", ["method", "handler", "status"]
 )
@@ -103,7 +104,8 @@ def forecast(request: ForecastRequest) -> ForecastResponse:
         artifact = _load_artifact()
         row = prediction_row(**request.model_dump())
     except (FileNotFoundError, OSError, ValueError) as exc:
-        raise HTTPException(status_code=503 if isinstance(exc, FileNotFoundError) else 422, detail=str(exc)) from exc
+        status_code = 503 if isinstance(exc, FileNotFoundError) else 422
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
     if artifact["selected_model"] == "weekly_naive":
         prediction = float(row.loc[0, "lag_7"])

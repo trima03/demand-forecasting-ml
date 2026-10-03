@@ -50,7 +50,11 @@ def train(output_dir: Path, data_path: Path | None = None) -> dict[str, object]:
 
     model_metrics = metric_report(actual, model_predictions)
     baseline_metrics = metric_report(actual, baseline_predictions)
-    selected_name = "hist_gradient_boosting" if model_metrics["mae"] < baseline_metrics["mae"] else "weekly_naive"
+    selected_name = (
+        "hist_gradient_boosting"
+        if model_metrics["mae"] < baseline_metrics["mae"]
+        else "weekly_naive"
+    )
     if selected_name == "hist_gradient_boosting":
         selected_estimator = HistGradientBoostingRegressor(
             learning_rate=0.08,
@@ -84,7 +88,11 @@ def train(output_dir: Path, data_path: Path | None = None) -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts"))
-    parser.add_argument("--data", type=Path, help="Optional CSV with date/store/product/price/promotion/sales columns")
+    parser.add_argument(
+        "--data",
+        type=Path,
+        help="Optional CSV with date/store/product/price/promotion/sales columns",
+    )
     args = parser.parse_args()
     print(json.dumps(train(args.output_dir, args.data), indent=2))
 
