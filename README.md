@@ -1,22 +1,22 @@
-# Retail Demand Forecasting
+# Прогнозирование спроса в розничной торговле
 
-A reproducible time-series forecasting pipeline with a FastAPI inference service. It compares a weekly seasonal-naive baseline with a gradient-boosted model and only selects the ML model when it improves the holdout MAE.
+Воспроизводимый конвейер прогнозирования временных рядов с сервисом инференса на FastAPI. Он сравнивает сезонный наивный прогноз по неделе с моделью градиентного бустинга и выбирает ML-модель, только если она снижает MAE на отложенной выборке.
 
-## What it demonstrates
+## Что демонстрирует проект
 
-- Time-aware holdout evaluation rather than a random row split.
-- Lag and rolling-window features built only from observations before the target date.
-- Baseline comparison using MAE, RMSE and WAPE.
-- A deterministic synthetic retail dataset, so the demo has no external data or credentials.
-- A saved model artifact, model metadata, input validation and live/readiness endpoints.
-- Prometheus request, latency and successful-forecast metrics for the companion deployment project.
-- Optional user-provided CSV data using the same explicit schema.
+- Проверку качества с учётом времени вместо случайного разделения строк.
+- Признаки на основе лагов и скользящих окон, рассчитанные только по наблюдениям до целевой даты.
+- Сравнение с базовым прогнозом по MAE, RMSE и WAPE.
+- Детерминированный синтетический набор данных о розничных продажах: внешние данные и учётные данные не нужны.
+- Сохранение модели, метаданные, проверку входных данных и эндпоинты состояния сервиса.
+- Метрики Prometheus для запросов, задержки и успешно построенных прогнозов; их использует сопутствующий проект развёртывания.
+- Необязательную загрузку собственного CSV с той же явной схемой.
 
-The generated data is synthetic and is intended to demonstrate the engineering workflow. It is not evidence of real-world retail accuracy. The validation setup is a rolling one-step-ahead simulation: each validation prediction may use observed sales from earlier validation dates as its lag history.
+Сгенерированные данные синтетические и нужны для демонстрации инженерного процесса. Они не подтверждают точность прогнозов для реальной розницы. Проверка устроена как скользящая симуляция прогноза на один шаг вперёд: для прогноза на дату из проверочной выборки можно использовать фактические продажи за предыдущие даты этой выборки.
 
-## Run locally
+## Локальный запуск
 
-Python 3.11 or newer is recommended.
+Рекомендуется Python 3.11 или новее.
 
 ```bash
 python -m venv .venv
@@ -26,13 +26,13 @@ python -m forecasting.train --output-dir artifacts
 uvicorn forecasting.api:app --reload --port 8000
 ```
 
-Open `http://127.0.0.1:8000/docs` for the interactive API. The first training run generates the demo dataset in memory and saves `artifacts/model.joblib` and `artifacts/metrics.json`.
+Интерактивная документация API доступна по адресу `http://127.0.0.1:8000/docs`. При первом обучении демонстрационный набор данных создаётся в памяти, а файлы `artifacts/model.joblib` и `artifacts/metrics.json` сохраняются на диск.
 
-The GitHub Actions container workflow trains the model during the image build, then publishes versioned images to `ghcr.io/trima03/demand-forecasting-ml` on pushes to `main` and `v*` tags.
+При сборке контейнера GitHub Actions обучает модель и публикует версионированные образы в `ghcr.io/trima03/demand-forecasting-ml` при отправке изменений в `main` и при создании тегов `v*`.
 
-## API example
+## Пример запроса к API
 
-`POST /v1/forecast` expects the last 28 observed daily sales values, oldest first:
+Эндпоинт `POST /v1/forecast` принимает последние 28 наблюдений дневных продаж — от самого раннего к самому позднему:
 
 ```json
 {
@@ -45,26 +45,26 @@ The GitHub Actions container workflow trains the model during the image build, t
 }
 ```
 
-Other endpoints: `GET /health/live`, `GET /health/ready`, and `GET /v1/model`.
+Другие эндпоинты: `GET /health/live`, `GET /health/ready` и `GET /v1/model`.
 
-## Use your own CSV
+## Использование собственного CSV
 
-Required columns: `date,store_id,product_id,price,promotion,sales`. Each store/product series needs at least 120 days; `promotion` is 0 or 1. The final 56 unique dates are reserved as a temporal holdout.
+Обязательные столбцы: `date,store_id,product_id,price,promotion,sales`. Для каждого ряда магазина и товара требуется не менее 120 дней данных; значение `promotion` должно быть равно 0 или 1. Последние 56 уникальных дат резервируются для проверки на временной выборке.
 
 ```bash
 python -m forecasting.train --data path/to/daily_sales.csv --output-dir artifacts
 ```
 
-## Project layout
+## Структура проекта
 
 ```text
 forecasting/
-  api.py       FastAPI inference and health endpoints
-  data.py      deterministic local demo data
-  features.py  shared train/serve feature definitions
-  train.py     temporal evaluation, model selection and artifact output
+  api.py       инференс и эндпоинты состояния на FastAPI
+  data.py      детерминированные локальные демонстрационные данные
+  features.py  общие определения признаков для обучения и сервиса
+  train.py     временная оценка, выбор модели и сохранение артефактов
 ```
 
-## Limitations
+## Ограничения
 
-This first version is a single-series-at-a-time inference service and has no online retraining, authentication, inventory constraints or external feature store. Production forecasting needs business-specific backtesting, data-quality checks and an agreed retraining policy.
+В первой версии сервис строит прогноз для одного ряда за раз. В ней нет переобучения на новых данных, аутентификации, ограничений по запасам и внешнего хранилища признаков. Для промышленного прогнозирования нужны бизнес-ориентированная проверка на истории, контроль качества данных и согласованная политика переобучения.
